@@ -1,7 +1,28 @@
 import { api_data, regions } from "./lib/data"
+import { useEffect, useState } from "react";
+
+const API_KEY = import.meta.env.VITE_RESTCOUNTRIES_API_KEY;
 
 function App() {
-    const countries = api_data.data.objects;
+    const [search, setSearch] = useState("");
+    const [region, setRegion] = useState("");
+    const [countries, setCountries] = useState<any[]>([]);
+
+
+    useEffect(() => {
+        const loadCountries = async () => {
+            const response = await fetch(
+                'https://api.restcountries.com/countries/v5?limit=100&response_fields=names.common,capitals,population,area,region',
+                { headers: { 'Authorization': `Bearer ${API_KEY}` } }
+            );
+            const json = await response.json();
+            setCountries(json.data.objects);
+        }
+        loadCountries();
+    }, []);
+
+    //uncomment for dummy data
+    // const countries = api_data.data.objects; 
     const totalCountries = countries.length;
     let maxPopulation = 0;
     let maxArea = 0 // miles
@@ -18,6 +39,14 @@ function App() {
             largestCountry = currCountry.names.common;
         }
     }
+
+    //filter
+    const visibleCountries = countries.filter((value) =>
+        value.names.common.toLowerCase().includes(search.toLowerCase())
+        &&
+        value.region.toLowerCase().includes(region.toLowerCase())
+    );
+
     return (
         <div className="min-h-screen">
             <div className="max-w-5xl mx-auto px-4 flex flex-col gap-5">
@@ -37,8 +66,18 @@ function App() {
                     </div>
                 </div>
                 <div className="flex gap-5 justify-center">
-                    <input className="border rounded-sm" type="text" placeholder="Search country" />
-                    <select className="border rounded-sm">
+                    <input
+                        className="border rounded-sm"
+                        type="text"
+                        value={search}
+                        placeholder="Search country"
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                    <select
+                        className="border rounded-sm"
+                        value={region}
+                        onChange={(e) => setRegion(e.target.value)}
+                    >
                         <option value="">Select region</option>
                         {regions.map((value) => <option key={value} value={value}>{value}</option>)}
                     </select>
@@ -56,7 +95,7 @@ function App() {
                     </thead>
                     <tbody>
                         {
-                            countries.map((value) =>
+                            visibleCountries.map((value) =>
                                 <tr key={value.names.common}>
                                     <td>{value.names.common}</td>
                                     <td>{value.capitals[0]?.name ?? "-"}</td>
