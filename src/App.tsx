@@ -10,19 +10,18 @@ function App() {
 
 
     useEffect(() => {
-        const loadCountries = async () => {
-            const response = await fetch(
-                'https://api.restcountries.com/countries/v5?limit=100&response_fields=names.common,capitals,population,area,region',
-                { headers: { 'Authorization': `Bearer ${API_KEY}` } }
-            );
-            const json = await response.json();
-            setCountries(json.data.objects);
-        }
-        loadCountries();
+        // const loadCountries = async () => {
+        //     const response = await fetch(
+        //         'https://api.restcountries.com/countries/v5?limit=100&response_fields=names.common,capitals,population,area,region',
+        //         { headers: { 'Authorization': `Bearer ${API_KEY}` } }
+        //     );
+        //     const json = await response.json();
+        //     setCountries(json.data.objects);
+        // }
+        // loadCountries();
+        setCountries(api_data.data.objects);
     }, []);
 
-    //uncomment for dummy data
-    // const countries = api_data.data.objects; 
     const totalCountries = countries.length;
     let maxPopulation = 0;
     let maxArea = 0 // miles
