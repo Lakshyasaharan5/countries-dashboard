@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { api_data, regions } from "./lib/data"
 import { useEffect, useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 const API_KEY = import.meta.env.VITE_RESTCOUNTRIES_API_KEY;
 
@@ -45,7 +46,22 @@ function App() {
         value.names.common.toLowerCase().includes(search.toLowerCase())
         &&
         value.region.toLowerCase().includes(region.toLowerCase())
+        &&
+        value.names.common.toLowerCase().length < 20 // no point in showing very long names
     );
+
+    //for charts
+    const topByPopulation = [...visibleCountries]
+        .sort((a, b) => b.population - a.population)
+        .slice(0, 10)
+        .map((c) => ({ name: c.names.common, population: c.population }));
+
+    const topByArea = [...visibleCountries]
+        .sort((a, b) => b.area.miles - a.area.miles)
+        .slice(0, 10)
+        .map((c) => ({ name: c.names.common, area: c.area.miles }));
+
+    const compact = new Intl.NumberFormat("en", { notation: "compact" });
 
     return (
         <div className="min-h-screen">
@@ -82,41 +98,71 @@ function App() {
                         {regions.map((value) => <option key={value} value={value}>{value}</option>)}
                     </select>
                 </div>
-                <table className="text-center">
-                    <thead>
-                        <tr>
-                            <th>Country</th>
-                            <th>Capital</th>
-                            <th>Region</th>
-                            <th>Area (miles)</th>
-                            <th>Population</th>
-                            <th>Density (pop/area)</th>
-                            <th>Details</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {
-                            visibleCountries.map((value) =>
-                                <tr key={value.names.common}>
-                                    <td>{value.names.common}</td>
-                                    <td>{value.capitals[0]?.name ?? "-"}</td>
-                                    <td>{value.region}</td>
-                                    <td>{value.area.miles}</td>
-                                    <td>{value.population}</td>
-                                    <td>{(value.population / value.area.miles).toFixed(2)}</td>
-                                    <td>
-                                        <Link
-                                            to={`/details/${encodeURIComponent(value.names.common)}`}
-                                            state={{ country: value }}
-                                        >
-                                            🔗
-                                        </Link>
-                                    </td>
-                                </tr>
-                            )
-                        }
-                    </tbody>
-                </table>
+                <div className="flex items-start">
+                    <table className="text-center flex-1">
+                        <thead>
+                            <tr>
+                                <th>Country</th>
+                                <th>Area (miles)</th>
+                                <th>Population</th>
+                                <th>Density (pop/area)</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {
+                                visibleCountries.map((value) =>
+                                    <tr key={value.names.common}>
+                                        <td>{value.names.common}</td>
+                                        <td>{value.area.miles}</td>
+                                        <td>{value.population}</td>
+                                        <td>{(value.population / value.area.miles).toFixed(2)}</td>
+                                        <td>
+                                            <Link
+                                                to={`/details/${encodeURIComponent(value.names.common)}`}
+                                                state={{ country: value }}
+                                            >
+                                                🔗
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                )
+                            }
+                        </tbody>
+                    </table>
+
+                    <div className="flex flex-col gap-5 w-96">
+                        <div>
+                            <h3 className="text-center font-semibold">Top 10 by Population</h3>
+                            <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={topByPopulation} layout="vertical" margin={{ left: 20 }}>
+                                    <XAxis
+                                        type="number"
+                                        tickFormatter={(v) => compact.format(v)}
+                                    />
+                                    <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12 }} />
+                                    <Tooltip formatter={(v: number) => compact.format(v)} />
+                                    <Bar dataKey="population" fill="#3b82f6" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div>
+                            <h3 className="text-center font-semibold">Top 10 by Area (mi²)</h3>
+                            <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={topByArea} layout="vertical" margin={{ left: 20 }}>
+                                    <XAxis
+                                        type="number"
+                                        tickFormatter={(v) => compact.format(v)}
+                                    />
+                                    <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12 }} />
+                                    <Tooltip formatter={(v: number) => compact.format(v)} />
+                                    <Bar dataKey="area" fill="#10b981" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
 
